@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "220689109037",
+    "project_id": "request-rides-5eb90",
+    "storage_bucket": "request-rides-5eb90.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:220689109037:android:84497e37637b18c073e8a4",
+        "android_client_info": {
+          "package_name": "com.example.requestrides"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "220689109037-otlrhml1qkbfvbh2dqm7i44hv5qtd4es.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDIyllwtHpCIsei-xdFWOvnDkgRTpHTo7w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "220689109037-otlrhml1qkbfvbh2dqm7i44hv5qtd4es.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
