@@ -40,6 +40,8 @@ public class DriverLoginSignupActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_driver_login_signup);
 
+        setTitle("Login to Driver Account");
+
         driverLoginBtn = findViewById(R.id.driverLoginBtn);
         driverRegBtn = findViewById(R.id.driverRegBtn);
         driverLoginTV = findViewById(R.id.driverloginTV);
@@ -62,7 +64,7 @@ public class DriverLoginSignupActivity extends AppCompatActivity {
                 driverLoginTV.setText("Register a Driver");
                 driverRegBtn.setVisibility(View.VISIBLE);
                 driverRegBtn.setEnabled(true);
-                driverRegBtn.animate().translationYBy(-370f).setDuration(200);
+                driverRegBtn.animate().translationYBy(-170f).setDuration(500);
             }
         });
 

@@ -18,6 +18,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        setTitle("Request Rides 24/7");
         driverWelcomeBtn = findViewById(R.id.driver_btn);
         riderWelcomeBtn = findViewById(R.id.rider_btn);
 

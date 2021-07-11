@@ -13,6 +13,8 @@ import android.location.Location;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
@@ -37,9 +39,12 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.squareup.picasso.Picasso;
 
 import java.util.HashMap;
 import java.util.List;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 public class RiderMapActivity extends FragmentActivity implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
@@ -51,6 +56,7 @@ public class RiderMapActivity extends FragmentActivity implements OnMapReadyCall
     Location lastLocation;
     LocationRequest locationRequest;
 
+    private Button riderSettingBtn;
     private Button logoutBtn;
     private Button reqRideBtn;
     private FirebaseAuth firebaseAuth;
@@ -72,6 +78,11 @@ public class RiderMapActivity extends FragmentActivity implements OnMapReadyCall
 
     GeoQuery geoQuery;
 
+    private TextView txtName, txtPhone, txtVehType;
+    private CircleImageView driverProfilePic;
+    private RelativeLayout relativeLayoutDrInfo;
+    String profileStatus = "";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,6 +91,7 @@ public class RiderMapActivity extends FragmentActivity implements OnMapReadyCall
 
         firebaseAuth =  FirebaseAuth.getInstance();
         currentUser = firebaseAuth.getCurrentUser();
+        riderSettingBtn = findViewById(R.id.settingBtn);
         logoutBtn = findViewById(R.id.logoutBtn);
         reqRideBtn = findViewById(R.id.reqRideBtn);
         riderId = firebaseAuth.getCurrentUser().getUid();
@@ -88,10 +100,26 @@ public class RiderMapActivity extends FragmentActivity implements OnMapReadyCall
         driverAvaiRef = FirebaseDatabase.getInstance("https://request-rides-5eb90-default-rtdb.firebaseio.com/").getReference().child("Available Drivers");
 
         driverWorkingRef = FirebaseDatabase.getInstance("https://request-rides-5eb90-default-rtdb.firebaseio.com/").getReference().child("Working Drivers");
+
+        txtName = findViewById(R.id.name_driver);
+        txtPhone = findViewById(R.id.phone_driver);
+        txtVehType = findViewById(R.id.vehicle_type_driver);
+        driverProfilePic = findViewById(R.id.profile_image_driver);
+        relativeLayoutDrInfo = findViewById(R.id.rel1);
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        riderSettingBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent riderSettingIntent = new Intent(RiderMapActivity.this, SettingsActivity.class);
+                riderSettingIntent.putExtra("type", "Rider");
+                startActivity(riderSettingIntent);
+            }
+        });
 
         logoutBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -138,6 +166,7 @@ public class RiderMapActivity extends FragmentActivity implements OnMapReadyCall
                     {}*/
 
                     reqRideBtn.setText("Request a Ride");
+                    relativeLayoutDrInfo.setVisibility(View.GONE);
 
                 }
                 else {
@@ -172,7 +201,27 @@ public class RiderMapActivity extends FragmentActivity implements OnMapReadyCall
                     isDriverFound = true;
                     driverFoundId = key;
 
-                    driversRef = FirebaseDatabase.getInstance("https://request-rides-5eb90-default-rtdb.firebaseio.com/").getReference().child("User").child("Driver").child(driverFoundId);
+                    driversRef = FirebaseDatabase.getInstance("https://request-rides-5eb90-default-rtdb.firebaseio.com/").getReference()
+                            .child("User").child("Driver").child(driverFoundId);
+                    driversRef.addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                            if (dataSnapshot.exists()  &&  dataSnapshot.getChildrenCount() > 0)
+                            {
+                                if (dataSnapshot.hasChild("profile status"))
+                                {
+                                    profileStatus = dataSnapshot.child("profile status").getValue().toString();
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                        }
+                    });
+
                     HashMap driversHashMap = new HashMap();
                     driversHashMap.put("RiderID", riderId);
                     driversRef.updateChildren(driversHashMap);
@@ -222,6 +271,12 @@ public class RiderMapActivity extends FragmentActivity implements OnMapReadyCall
                             double locLat = 0;
                             double locLng = 0;
                             //reqRideBtn.setText("Driver Found");
+
+                            if(profileStatus.equals("updated"))
+                            {
+                                relativeLayoutDrInfo.setVisibility(View.VISIBLE);
+                                getAssignedDriverInfo();
+                            }
 
                             if(driverLocMap.get(0) !=null)
                                 locLat = Double.parseDouble(driverLocMap.get(0).toString());
@@ -337,6 +392,41 @@ public class RiderMapActivity extends FragmentActivity implements OnMapReadyCall
         riderLogOutIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(riderLogOutIntent);
         finish();
+    }
+
+    private void getAssignedDriverInfo()
+    {
+        DatabaseReference reference = FirebaseDatabase.getInstance("https://request-rides-5eb90-default-rtdb.firebaseio.com/").getReference()
+                .child("User").child("Driver").child(driverFoundId);
+
+        reference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot)
+            {
+                if (dataSnapshot.exists()  &&  dataSnapshot.getChildrenCount() > 0)
+                {
+                    String name = dataSnapshot.child("name").getValue().toString();
+                    String phoneNum = dataSnapshot.child("phone number").getValue().toString();
+                    String vehicleType = dataSnapshot.child("vehicle type").getValue().toString();
+
+
+                    txtName.setText(name);
+                    txtPhone.setText(phoneNum);
+                    txtVehType.setText(vehicleType);
+
+                    if (dataSnapshot.hasChild("profile picture"))
+                    {
+                        String profilePic = dataSnapshot.child("profile picture").getValue().toString();
+                        Picasso.get().load(profilePic).into(driverProfilePic);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 
 }

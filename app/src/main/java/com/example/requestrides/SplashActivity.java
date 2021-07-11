@@ -24,7 +24,9 @@ public class SplashActivity extends AppCompatActivity {
                 }
                 finally {
                     Intent launcherIntent = new Intent(SplashActivity.this, MainActivity.class);
+                    launcherIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     startActivity(launcherIntent);
+                    finish();
                 }
             }
         };

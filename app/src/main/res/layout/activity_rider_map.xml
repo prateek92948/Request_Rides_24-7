@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".RiderMapActivity">
 
     <fragment
@@ -17,6 +17,80 @@
         android:layout_marginTop="52dp"
         android:layout_marginBottom="49dp" />
 
+    <RelativeLayout
+        android:id="@+id/rel1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/reqRideBtn"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginBottom="10dp"
+        android:background="#25334B"
+        android:visibility="gone">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/profile_image_driver"
+            android:layout_width="90dp"
+            android:layout_height="90dp"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="15dp"
+            android:padding="3dp"
+            android:src="@drawable/profile"
+            app:civ_border_color="#c880ff"
+            app:civ_border_width="2dp" />
+
+        <TextView
+            android:id="@+id/name_driver"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="8dp"
+            android:layout_toRightOf="@+id/profile_image_driver"
+            android:text="Driver Name"
+            android:textColor="@android:color/white"
+            android:textSize="16dp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/phone_driver"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/name_driver"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="3dp"
+            android:layout_toRightOf="@+id/profile_image_driver"
+            android:text="Driver Phone Number"
+            android:textColor="@android:color/white"
+            android:textSize="16dp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/vehicle_type_driver"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/phone_driver"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="3dp"
+            android:layout_toRightOf="@+id/profile_image_driver"
+            android:text="Driver Vehicle Type"
+            android:textColor="@android:color/white"
+            android:textSize="16dp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/driver_phone_iv"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="15dp"
+            android:src="@drawable/phone"
+            android:tint="@android:color/white" />
+
+    </RelativeLayout>
+
+
     <Button
         android:id="@+id/logoutBtn"
         android:layout_width="196dp"
@@ -28,11 +102,11 @@
         android:layout_marginEnd="0dp"
         android:layout_marginRight="10dp"
         android:background="#25334B"
-        android:fontFamily="cursive"
+        android:fontFamily="sans-serif"
         android:text="LogOut"
         android:textAllCaps="false"
         android:textColor="#FFFFFF"
-        android:textSize="28sp" />
+        android:textSize="20sp" />
 
     <Button
         android:id="@+id/settingBtn"
@@ -43,23 +117,24 @@
         android:layout_marginStart="0dp"
         android:layout_marginLeft="10dp"
         android:layout_marginTop="0dp"
-        android:background="#E53935"
-        android:fontFamily="cursive"
-        android:text="Setting"
+        android:background="#25334B"
+        android:fontFamily="sans-serif"
+        android:text="My Profile"
         android:textAllCaps="false"
         android:textColor="#FFFFFF"
-        android:textSize="28sp" />
+        android:textSize="20sp" />
 
     <Button
         android:id="@+id/reqRideBtn"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="75dp"
         android:layout_alignParentStart="true"
         android:layout_alignParentBottom="true"
         android:layout_marginStart="0dp"
         android:layout_marginBottom="0dp"
         android:background="#25334B"
         android:fontFamily="cursive"
+        android:padding="10sp"
         android:text="Request a Ride"
         android:textAllCaps="false"
         android:textColor="#FFFFFF"

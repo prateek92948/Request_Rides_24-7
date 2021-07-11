@@ -13,6 +13,9 @@ import android.location.Location;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
@@ -35,8 +38,11 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.squareup.picasso.Picasso;
 
 import java.util.List;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 public class DriverMapActivity extends FragmentActivity implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
@@ -48,7 +54,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     Location lastLocation;
     LocationRequest locationRequest;
 
-    private Button settingBtn;
+    private Button riderSettingBtn;
     private Button logoutBtn;
     private FirebaseAuth firebaseAuth;
     private FirebaseUser currentUser;
@@ -58,28 +64,49 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     private ValueEventListener assignedRiderPickUpRefListener;
     String driverID, riderID="";
 
+    private TextView txtName, txtPhone;
+    private CircleImageView riderProfilePic;
+    private RelativeLayout relativeLayoutRiInfo;
+    String profileStatus = "";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_driver_map);
 
+
         firebaseAuth =  FirebaseAuth.getInstance();
         currentUser = firebaseAuth.getCurrentUser();
-        settingBtn = findViewById(R.id.settingBtn);
+        riderSettingBtn = findViewById(R.id.settingBtn);
         logoutBtn = findViewById(R.id.logoutBtn);
         driverID = firebaseAuth.getCurrentUser().getUid();
+
+        txtName = findViewById(R.id.name_rider);
+        txtPhone = findViewById(R.id.phone_rider);
+        riderProfilePic = findViewById(R.id.profile_image_rider);
+        relativeLayoutRiInfo = findViewById(R.id.rel2);
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        riderSettingBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent driverSettingIntent = new Intent(DriverMapActivity.this, SettingsActivity.class);
+                driverSettingIntent.putExtra("type", "Driver");
+                startActivity(driverSettingIntent);
+            }
+        });
 
         logoutBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 isDriverLoggedOut = true;
                 disconnectDriver();
-                firebaseAuth.signOut();
                 logoutDriver();
+                firebaseAuth.signOut();
             }
         });
 
@@ -97,6 +124,34 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                 {
                     riderID = dataSnapshot.getValue().toString();
                     getAssignedRiderPickUpLoc();
+
+                    DatabaseReference riderRef = FirebaseDatabase.getInstance("https://request-rides-5eb90-default-rtdb.firebaseio.com/").getReference()
+                            .child("User").child("Rider").child(riderID);
+                    riderRef.addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                            if (dataSnapshot.exists()  &&  dataSnapshot.getChildrenCount() > 0)
+                            {
+                                if (dataSnapshot.hasChild("profile status"))
+                                {
+                                    profileStatus = dataSnapshot.child("profile status").getValue().toString();
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                        }
+                    });
+
+                    if(profileStatus.equals("updated"))
+                    {
+                        getAssignedRiderInfo();
+                        relativeLayoutRiInfo.setVisibility(View.VISIBLE);
+                    }
+
                 }
                 else {
                     riderID = "";
@@ -106,6 +161,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                     if(assignedRiderPickUpRefListener != null)
                         assignedRiderPickUpRef.removeEventListener(assignedRiderPickUpRefListener);
 
+                    relativeLayoutRiInfo.setVisibility(View.GONE);
                 }
 
             }
@@ -204,7 +260,6 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
             if(!isDriverLoggedOut)
             {
-                String onlineDriverID = FirebaseAuth.getInstance().getCurrentUser().getUid();
                 DatabaseReference driverAvailabilityRef = FirebaseDatabase.getInstance("https://request-rides-5eb90-default-rtdb.firebaseio.com/").getReference().child("Available Drivers");
                 GeoFire geoFireAvai = new GeoFire(driverAvailabilityRef);
 
@@ -214,12 +269,13 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                switch (riderID)
                {
                    case "":
-                       geoFireWorking.removeLocation(onlineDriverID);
-                       geoFireAvai.setLocation(onlineDriverID, new GeoLocation(location.getLatitude(), location.getLongitude()));
+                       geoFireWorking.removeLocation(driverID);
+                       //Toast.makeText(this, "coming here", Toast.LENGTH_SHORT).show();
+                       geoFireAvai.setLocation(driverID, new GeoLocation(location.getLatitude(), location.getLongitude()));
                        break;
                    default:
-                       geoFireAvai.removeLocation(onlineDriverID);
-                       geoFireWorking.setLocation(onlineDriverID, new GeoLocation(location.getLatitude(), location.getLongitude()));
+                       geoFireAvai.removeLocation(driverID);
+                       geoFireWorking.setLocation(driverID, new GeoLocation(location.getLatitude(), location.getLongitude()));
                        break;
                }
             }
@@ -248,18 +304,48 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     }
 
     private void disconnectDriver() {
-        String driverID = firebaseAuth.getCurrentUser().getUid();
         DatabaseReference driverAvailabilityRef = FirebaseDatabase.getInstance("https://request-rides-5eb90-default-rtdb.firebaseio.com/").getReference().child("Available Drivers");
-
         GeoFire geoFire = new GeoFire(driverAvailabilityRef);
         geoFire.removeLocation(driverID);
     }
 
     private void logoutDriver() {
         Intent driverLogOutIntent = new Intent(DriverMapActivity.this, MainActivity.class);
-        driverLogOutIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        driverLogOutIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(driverLogOutIntent);
         finish();
+    }
+
+    private void getAssignedRiderInfo()
+    {
+        DatabaseReference reference = FirebaseDatabase.getInstance("https://request-rides-5eb90-default-rtdb.firebaseio.com/").getReference()
+                .child("User").child("Rider").child(riderID);
+
+        reference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot)
+            {
+                if (dataSnapshot.exists()  &&  dataSnapshot.getChildrenCount() > 0)
+                {
+                    String name = dataSnapshot.child("name").getValue().toString();
+                    String phoneNum = dataSnapshot.child("phone number").getValue().toString();
+
+                    txtName.setText(name);
+                    txtPhone.setText(phoneNum);
+
+                    if (dataSnapshot.hasChild("profile picture"))
+                    {
+                        String profilePic = dataSnapshot.child("profile picture").getValue().toString();
+                        Picasso.get().load(profilePic).into(riderProfilePic);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 
 }

@@ -40,6 +40,8 @@ public class RiderLoginSignupActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_rider_login_signup);
 
+        setTitle("Login to Rider Account");
+
         riderLoginBtn = findViewById(R.id.riderLoginBtn);
         riderRegBtn = findViewById(R.id.riderRegBtn);
         riderLoginTV = findViewById(R.id.riderloginTV);
@@ -63,7 +65,7 @@ public class RiderLoginSignupActivity extends AppCompatActivity {
                 riderLoginTV.setText("Register a Rider");
                 riderRegBtn.setVisibility(View.VISIBLE);
                 riderRegBtn.setEnabled(true);
-                riderRegBtn.animate().translationYBy(-340f).setDuration(200);
+                riderRegBtn.animate().translationYBy(-150f).setDuration(500);
             }
         });
 
