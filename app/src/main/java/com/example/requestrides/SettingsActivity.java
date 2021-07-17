@@ -290,7 +290,7 @@ public class SettingsActivity extends AppCompatActivity {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot)
             {
-                if (dataSnapshot.exists()  &&  dataSnapshot.getChildrenCount() > 0)
+                if (dataSnapshot.exists()  &&  dataSnapshot.getChildrenCount() > 1)
                 {
                     String name = dataSnapshot.child("name").getValue().toString();
                     String phoneNum= dataSnapshot.child("phone number").getValue().toString();

@@ -15,6 +15,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
@@ -83,6 +84,10 @@ public class RiderMapActivity extends FragmentActivity implements OnMapReadyCall
     private RelativeLayout relativeLayoutDrInfo;
     String profileStatus = "";
 
+    String driverName = "";
+    private TextView driverStatusTV;
+    private Boolean isDriverArrived = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,6 +111,8 @@ public class RiderMapActivity extends FragmentActivity implements OnMapReadyCall
         txtVehType = findViewById(R.id.vehicle_type_driver);
         driverProfilePic = findViewById(R.id.profile_image_driver);
         relativeLayoutDrInfo = findViewById(R.id.rel1);
+
+        driverStatusTV = findViewById(R.id.driverStatusTV);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -135,57 +142,66 @@ public class RiderMapActivity extends FragmentActivity implements OnMapReadyCall
 
                 if(requestRideBtnPressed)
                 {
-                    requestRideBtnPressed = false;
-                    geoQuery.removeAllListeners();
-                    driverWorkingRef.removeEventListener(driverWorkingRefListener);
-
-                    if(isDriverFound)
-                    {
-                        driversRef =  FirebaseDatabase.getInstance("https://request-rides-5eb90-default-rtdb.firebaseio.com/").getReference()
-                                .child("User").child("Driver").child(driverFoundId).child("RiderID");
-                        driversRef.removeValue(); //
-                        driverFoundId = null;
-
-                    }
-
-                    isDriverFound = false;
-                    radius = 1;
-                    String riderId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                    GeoFire geoFire = new GeoFire(riderRequestsDBRef);
-                    geoFire.removeLocation(riderId);
-
-                    if(riderPickUpMarker != null)
-                        riderPickUpMarker.remove();
-
-                    if(driverMarker != null)
-                        driverMarker.remove();
-
-
-                 /*   try { Thread.sleep(2000);}
-                    catch(Exception e)
-                    {}*/
-
-                    reqRideBtn.setText("Request a Ride");
-                    relativeLayoutDrInfo.setVisibility(View.GONE);
-
+                    removeRideRequest();
                 }
                 else {
-                    requestRideBtnPressed = true;
-                    String riderId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                    GeoFire geoFire = new GeoFire(riderRequestsDBRef);
-                    geoFire.setLocation(riderId, new GeoLocation(lastLocation.getLatitude(), lastLocation.getLongitude()));
-                    riderPickUpLocLatLng = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
-                    riderPickUpMarker = mMap.addMarker(new MarkerOptions().position(riderPickUpLocLatLng).title("Your Location").icon(BitmapDescriptorFactory.fromResource(R.drawable.rider_icon)));
+                    if(!isDriverArrived)
+                    {
+                        requestRideBtnPressed = true;
+                        String riderId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                        GeoFire geoFire = new GeoFire(riderRequestsDBRef);
+                        geoFire.setLocation(riderId, new GeoLocation(lastLocation.getLatitude(), lastLocation.getLongitude()));
+                        riderPickUpLocLatLng = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
+                        riderPickUpMarker = mMap.addMarker(new MarkerOptions().position(riderPickUpLocLatLng).title("Your Location").icon(BitmapDescriptorFactory.fromResource(R.drawable.rider_icon)));
 
-                    //reqRideBtn.setText("Searching Nearby Driver..");
-                    //reqRideBtn.setAlpha(.5f);
-                    //reqRideBtn.setEnabled(false);
+                        driverStatusTV.setVisibility(View.VISIBLE);
+                        driverStatusTV.setText("Searching Nearby Driver..");
+                        reqRideBtn.setText("Cancel Request");
 
-                    showClosestDriver();
+                        showClosestDriver();
+                    }
+                    else
+                    {
+                       driverStatusTV.setText("You are on a Ride with "+ driverName);
+                       reqRideBtn.setText("End My Ride");
+                       requestRideBtnPressed = true;
+                    }
                 }
 
             }
         });
+    }
+
+    private void removeRideRequest() {
+        requestRideBtnPressed = false;
+        isDriverArrived = false;
+        driverStatusTV.setVisibility(View.INVISIBLE);
+        geoQuery.removeAllListeners();
+        driverWorkingRef.removeEventListener(driverWorkingRefListener);
+
+        if(isDriverFound)
+        {
+            driversRef =  FirebaseDatabase.getInstance("https://request-rides-5eb90-default-rtdb.firebaseio.com/").getReference()
+                    .child("User").child("Driver").child(driverFoundId).child("RiderID");
+            driversRef.removeValue(); //
+            driverFoundId = null;
+
+        }
+
+        isDriverFound = false;
+        radius = 1;
+        String riderId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        GeoFire geoFire = new GeoFire(riderRequestsDBRef);
+        geoFire.removeLocation(riderId);
+
+        if(riderPickUpMarker != null)
+            riderPickUpMarker.remove();
+
+        if(driverMarker != null)
+            driverMarker.remove();
+
+        reqRideBtn.setText("Request a Ride");
+        relativeLayoutDrInfo.setVisibility(View.GONE);
     }
 
     private void showClosestDriver() {
@@ -200,6 +216,8 @@ public class RiderMapActivity extends FragmentActivity implements OnMapReadyCall
                 {
                     isDriverFound = true;
                     driverFoundId = key;
+
+                    driverStatusTV.setText("Driver Found..");
 
                     driversRef = FirebaseDatabase.getInstance("https://request-rides-5eb90-default-rtdb.firebaseio.com/").getReference()
                             .child("User").child("Driver").child(driverFoundId);
@@ -225,11 +243,9 @@ public class RiderMapActivity extends FragmentActivity implements OnMapReadyCall
                     HashMap driversHashMap = new HashMap();
                     driversHashMap.put("RiderID", riderId);
                     driversRef.updateChildren(driversHashMap);
-                    reqRideBtn.setText("Looking for Driver Location..");
+                    driverStatusTV.setText("Looking for Driver Location..");
 
                     gettingDriverLoc();
-
-                    //reqRideBtn.animate().alpha(.9f).setDuration(2000);
                 }
             }
 
@@ -270,7 +286,6 @@ public class RiderMapActivity extends FragmentActivity implements OnMapReadyCall
                             List<Object> driverLocMap = (List<Object>)dataSnapshot.getValue();
                             double locLat = 0;
                             double locLng = 0;
-                            //reqRideBtn.setText("Driver Found");
 
                             if(profileStatus.equals("updated"))
                             {
@@ -302,10 +317,15 @@ public class RiderMapActivity extends FragmentActivity implements OnMapReadyCall
                             int distanceBetweenRiderAndDriver = (int)riderLoc.distanceTo(driverLoc);
 
 
-                            if (distanceBetweenRiderAndDriver <= 100)
-                               reqRideBtn.setText("Your Driver has Arrived. Have a Safe journey!");
+                            if (distanceBetweenRiderAndDriver <= 100 && !isDriverArrived)
+                            {
+                                driverStatusTV.setText("Your Driver has Arrived!");
+                                reqRideBtn.setText("Start My Ride");
+                                isDriverArrived = true;
+                                requestRideBtnPressed = false;
+                            }
                             else
-                                reqRideBtn.setText("Driver is "+ distanceBetweenRiderAndDriver+" m away");
+                                driverStatusTV.setText("Driver is "+ distanceBetweenRiderAndDriver+"m away");
 
                             driverMarker = mMap.addMarker(new MarkerOptions().position(driverLatLng).title("Your Driver's Location").icon(BitmapDescriptorFactory.fromResource(R.drawable.cab)));
                         }
@@ -413,6 +433,8 @@ public class RiderMapActivity extends FragmentActivity implements OnMapReadyCall
                     txtName.setText(name);
                     txtPhone.setText(phoneNum);
                     txtVehType.setText(vehicleType);
+
+                    driverName = name;
 
                     if (dataSnapshot.hasChild("profile picture"))
                     {
