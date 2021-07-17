@@ -55,6 +55,13 @@ public class DriverLoginSignupActivity extends AppCompatActivity {
         driverRegBtn.setVisibility(View.INVISIBLE);
         driverRegBtn.setEnabled(false);
 
+        if(firebaseAuth.getCurrentUser()!=null)
+        {
+            //jump to driver map Activity
+
+            moveToDriverMapActivity();
+        }
+
         driverRegLinkTV.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -89,6 +96,11 @@ public class DriverLoginSignupActivity extends AppCompatActivity {
         });
     }
 
+    private void moveToDriverMapActivity() {
+        Intent driverMapIntent = new Intent(DriverLoginSignupActivity.this, DriverMapActivity.class);
+        startActivity(driverMapIntent);
+    }
+
     private void logInDriver(String driver_email, String driver_psw) {
         if(TextUtils.isEmpty(driver_email))
             Toast.makeText(this, "Please Enter Your Email", Toast.LENGTH_SHORT).show();
@@ -106,8 +118,7 @@ public class DriverLoginSignupActivity extends AppCompatActivity {
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             if(task.isSuccessful()) {
                                 progressDialog.dismiss();
-                                Intent driverMapIntent = new Intent(DriverLoginSignupActivity.this, DriverMapActivity.class);
-                                startActivity(driverMapIntent);
+                                moveToDriverMapActivity();
                                 Toast.makeText(DriverLoginSignupActivity.this, "Driver Logged In Successfully", Toast.LENGTH_SHORT).show();
                             }
                             else {
@@ -143,8 +154,7 @@ public class DriverLoginSignupActivity extends AppCompatActivity {
                                        .child("User").child("Driver").child(currentDriverId);
                                driverDBRef.setValue(true);
                                progressDialog.dismiss();
-                               Intent driverMapIntent = new Intent(DriverLoginSignupActivity.this, DriverMapActivity.class);
-                               startActivity(driverMapIntent);
+                               moveToDriverMapActivity();
                                Toast.makeText(DriverLoginSignupActivity.this, "Driver Registered Successfully", Toast.LENGTH_SHORT).show();
                            }
                            else {

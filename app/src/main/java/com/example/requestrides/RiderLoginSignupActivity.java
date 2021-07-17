@@ -56,6 +56,13 @@ public class RiderLoginSignupActivity extends AppCompatActivity {
         riderRegBtn.setVisibility(View.INVISIBLE);
         riderRegBtn.setEnabled(false);
 
+        if(firebaseAuth.getCurrentUser()!=null)
+        {
+            //jump to driver map Activity
+
+            moveToRiderMapActivity();
+        }
+
         riderRegLinkTV.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -90,6 +97,11 @@ public class RiderLoginSignupActivity extends AppCompatActivity {
         });
     }
 
+    private void moveToRiderMapActivity() {
+        Intent riderMapIntent = new Intent(RiderLoginSignupActivity.this, RiderMapActivity.class);
+        startActivity(riderMapIntent);
+    }
+
     private void logInRider(String rider_email, String rider_psw) {
         if (TextUtils.isEmpty(rider_email))
             Toast.makeText(this, "Please Enter Your Email", Toast.LENGTH_SHORT).show();
@@ -106,8 +118,7 @@ public class RiderLoginSignupActivity extends AppCompatActivity {
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             if (task.isSuccessful()) {
                                 progressDialog.dismiss();
-                                Intent riderMapIntent = new Intent(RiderLoginSignupActivity.this, RiderMapActivity.class);
-                                startActivity(riderMapIntent);
+                                moveToRiderMapActivity();
                                 Toast.makeText(RiderLoginSignupActivity.this, "Rider Logged in Successfully", Toast.LENGTH_SHORT).show();
                             } else {
                                 progressDialog.dismiss();
@@ -139,8 +150,7 @@ public class RiderLoginSignupActivity extends AppCompatActivity {
                                         .child("User").child("Rider").child(currentRiderId);
                                 riderDBRef.setValue(true);
                                 progressDialog.dismiss();
-                                Intent riderMapIntent = new Intent(RiderLoginSignupActivity.this, RiderMapActivity.class);
-                                startActivity(riderMapIntent);
+                                moveToRiderMapActivity();
                                 Toast.makeText(RiderLoginSignupActivity.this, "Rider Registered Successfully", Toast.LENGTH_SHORT).show();
 
                             }
