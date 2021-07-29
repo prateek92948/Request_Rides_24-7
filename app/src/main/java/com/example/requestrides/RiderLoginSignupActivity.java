@@ -17,8 +17,11 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class RiderLoginSignupActivity extends AppCompatActivity {
 
@@ -56,11 +59,24 @@ public class RiderLoginSignupActivity extends AppCompatActivity {
         riderRegBtn.setVisibility(View.INVISIBLE);
         riderRegBtn.setEnabled(false);
 
-        if(firebaseAuth.getCurrentUser()!=null)
-        {
-            //jump to driver map Activity
+        if(firebaseAuth.getCurrentUser() != null) {
+            currentRiderId = firebaseAuth.getCurrentUser().getUid();
+            riderDBRef = FirebaseDatabase.getInstance("https://request-rides-5eb90-default-rtdb.firebaseio.com/").getReference()
+                    .child("User").child("Rider");
 
-            moveToRiderMapActivity();
+            riderDBRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    if(dataSnapshot.hasChild(currentRiderId))
+                       moveToRiderMapActivity();
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                }
+            });
+
         }
 
         riderRegLinkTV.setOnClickListener(new View.OnClickListener() {
@@ -117,9 +133,30 @@ public class RiderLoginSignupActivity extends AppCompatActivity {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             if (task.isSuccessful()) {
-                                progressDialog.dismiss();
-                                moveToRiderMapActivity();
-                                Toast.makeText(RiderLoginSignupActivity.this, "Rider Logged in Successfully", Toast.LENGTH_SHORT).show();
+                                currentRiderId = firebaseAuth.getCurrentUser().getUid();
+                                riderDBRef = FirebaseDatabase.getInstance("https://request-rides-5eb90-default-rtdb.firebaseio.com/").getReference()
+                                        .child("User").child("Rider");
+                                riderDBRef.addValueEventListener(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                        progressDialog.dismiss();
+                                        if(dataSnapshot.hasChild(currentRiderId))
+                                        {
+                                            moveToRiderMapActivity();
+                                            Toast.makeText(RiderLoginSignupActivity.this, "Rider Logged in Successfully", Toast.LENGTH_SHORT).show();
+                                        }
+                                        else
+                                        {
+                                            Toast.makeText(RiderLoginSignupActivity.this, "Your credentials does not match with any rider account. Please login as a Driver", Toast.LENGTH_LONG).show();
+                                            firebaseAuth.signOut();
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                    }
+                                });
                             } else {
                                 progressDialog.dismiss();
                                 Toast.makeText(RiderLoginSignupActivity.this, task.getException().getMessage(), Toast.LENGTH_LONG).show();
@@ -149,6 +186,7 @@ public class RiderLoginSignupActivity extends AppCompatActivity {
                                 riderDBRef = FirebaseDatabase.getInstance("https://request-rides-5eb90-default-rtdb.firebaseio.com/").getReference()
                                         .child("User").child("Rider").child(currentRiderId);
                                 riderDBRef.setValue(true);
+
                                 progressDialog.dismiss();
                                 moveToRiderMapActivity();
                                 Toast.makeText(RiderLoginSignupActivity.this, "Rider Registered Successfully", Toast.LENGTH_SHORT).show();

@@ -7,6 +7,7 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -18,8 +19,13 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.HashMap;
 
 public class DriverLoginSignupActivity extends AppCompatActivity {
 
@@ -55,11 +61,24 @@ public class DriverLoginSignupActivity extends AppCompatActivity {
         driverRegBtn.setVisibility(View.INVISIBLE);
         driverRegBtn.setEnabled(false);
 
-        if(firebaseAuth.getCurrentUser()!=null)
-        {
-            //jump to driver map Activity
+        if(firebaseAuth.getCurrentUser() != null) {
+            currentDriverId = firebaseAuth.getCurrentUser().getUid();
+            driverDBRef = FirebaseDatabase.getInstance("https://request-rides-5eb90-default-rtdb.firebaseio.com/").getReference()
+                    .child("User").child("Driver");
 
-            moveToDriverMapActivity();
+            driverDBRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    if(dataSnapshot.hasChild(currentDriverId))
+                        moveToDriverMapActivity();
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                }
+            });
+
         }
 
         driverRegLinkTV.setOnClickListener(new View.OnClickListener() {
@@ -117,9 +136,31 @@ public class DriverLoginSignupActivity extends AppCompatActivity {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             if(task.isSuccessful()) {
-                                progressDialog.dismiss();
-                                moveToDriverMapActivity();
-                                Toast.makeText(DriverLoginSignupActivity.this, "Driver Logged In Successfully", Toast.LENGTH_SHORT).show();
+
+                                currentDriverId = firebaseAuth.getCurrentUser().getUid();
+                                driverDBRef = FirebaseDatabase.getInstance("https://request-rides-5eb90-default-rtdb.firebaseio.com/").getReference()
+                                        .child("User").child("Driver");
+                                driverDBRef.addValueEventListener(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                        progressDialog.dismiss();
+                                        if(dataSnapshot.hasChild(currentDriverId))
+                                        {
+                                            moveToDriverMapActivity();
+                                            Toast.makeText(DriverLoginSignupActivity.this, "Driver Logged In Successfully", Toast.LENGTH_SHORT).show();
+                                        }
+                                        else
+                                        {
+                                            Toast.makeText(DriverLoginSignupActivity.this, "Your credentials does not match with any driver account. Please login as a Rider", Toast.LENGTH_LONG).show();
+                                            firebaseAuth.signOut();
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                    }
+                                });
                             }
                             else {
                                 progressDialog.dismiss();
